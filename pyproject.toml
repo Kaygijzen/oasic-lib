@@ -3,14 +3,14 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "occlusion_utils"
+name = "oasic-lib"
 version = "0.1.0"
 description = "OASIC: Occlusion-Agnostic Severity-Informed Classification utilities for robust image classification"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.8"
 authors = [
-    {name = "OASIC Team"}
+    {name = "Kay Gijzen"}
 ]
 keywords = [
     "occlusion",
@@ -62,9 +62,9 @@ docs = [
 ]
 
 [project.urls]
-Homepage = "https://gitlab.tsn.tno.nl/gijzenk/occlusion_utils"
-Documentation = "https://gitlab.tsn.tno.nl/gijzenk/occlusion_utils"
-Repository = "https://gitlab.tsn.tno.nl/gijzenk/occlusion_utils"
+Homepage = "https://github.com/Kaygijzen/oasic-lib"
+Documentation = "https://github.com/Kaygijzen/oasic-lib"
+Repository = "https://github.com/Kaygijzen/oasic-lib"
 
 [tool.setuptools.packages.find]
 where = ["."]
