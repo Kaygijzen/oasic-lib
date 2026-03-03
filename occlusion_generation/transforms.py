@@ -7,7 +7,8 @@ import torch
 import random
 from .functions import (
     get_occlusion_mask, 
-    apply_occlusion
+    apply_occlusion,
+    paste_vegetation_progressively
 )
 
 
