@@ -1,0 +1,97 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "occlusion_utils"
+version = "0.1.0"
+description = "OASIC: Occlusion-Agnostic Severity-Informed Classification utilities for robust image classification"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.8"
+authors = [
+    {name = "OASIC Team"}
+]
+keywords = [
+    "occlusion",
+    "computer-vision",
+    "image-classification",
+    "anomaly-detection",
+    "deep-learning",
+    "pytorch"
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Image Processing",
+]
+dependencies = [
+    "torch>=1.9.0",
+    "torchvision>=0.10.0",
+    "numpy>=1.19.0",
+    "noise>=1.2.2",
+    "scikit-image>=0.18.0",
+    "scikit-learn>=0.24.0",
+    "opencv-python>=4.5.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "mypy>=1.0.0",
+    "ruff>=0.1.0",
+]
+docs = [
+    "sphinx>=6.0.0",
+    "sphinx-rtd-theme>=1.0.0",
+]
+
+[project.urls]
+Homepage = "https://gitlab.tsn.tno.nl/gijzenk/occlusion_utils"
+Documentation = "https://gitlab.tsn.tno.nl/gijzenk/occlusion_utils"
+Repository = "https://gitlab.tsn.tno.nl/gijzenk/occlusion_utils"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["occlusion_generation*", "occlusion_detection*", "utils*"]
+
+[tool.black]
+line-length = 100
+target-version = ["py38", "py39", "py310", "py311", "py312"]
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.ruff]
+line-length = 100
+target-version = "py38"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
