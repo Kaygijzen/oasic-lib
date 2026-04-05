@@ -17,27 +17,29 @@ def anomaly_map_to_occ_map(
         Converts float anomaly map(s) to binary occlusion map(s).
         Supports [H, W] or [B, H, W] tensors.
     """
+    if isinstance(anomaly_map, np.ndarray):
+        anomaly_map = torch.from_numpy(anomaly_map)
+
     if anomaly_map.ndim == 2:  # single image
         if use_otsu:
-            thr = threshold_otsu(anomaly_map.cpu().numpy()) + otsu_offset
+            thr = threshold_otsu(anomaly_map.numpy()) + otsu_offset
         else:
             thr = masking_threshold
         return (anomaly_map >= thr).to(torch.uint8)
 
     elif anomaly_map.ndim == 3:  # batch
         if use_otsu:
-            # per-image Otsu thresholding
             masks = []
             thrs = []
             for i in range(anomaly_map.shape[0]):
-                thr = threshold_otsu(anomaly_map[i].cpu().numpy()) + otsu_offset
+                thr = threshold_otsu(anomaly_map[i].numpy()) + otsu_offset
                 thrs.append(thr)
                 masks.append((anomaly_map[i] >= thr).to(torch.uint8))
-            thr = sum(thrs) / len(thrs) if len(thrs) > 0 else 0 # mean threshold
-            masks = torch.stack(masks, dim=0) # [B, H, W]
-            return masks, thr 
+            thr = sum(thrs) / len(thrs)
+            masks = torch.stack(masks, dim=0)  # [B, H, W]
+            return masks, thr
         else:
-            return (anomaly_map >= masking_threshold).to(torch.uint8), thr
+            return (anomaly_map >= masking_threshold).to(torch.uint8)
     else:
         raise ValueError("Expected [H,W] or [B,H,W] tensor")
 

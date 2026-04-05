@@ -23,12 +23,13 @@ class LocalizeOcclusion:
         self.grid_size = grid_size
         self.device = device
         
-    def extract_features(self, image_tensor): # TODO: run this using CUDA
+    def extract_features(self, image_tensor):
         with torch.inference_mode():
             image_tensor = image_tensor.to(self.device)
-
             tokens = self.feature_extractor.get_intermediate_layers(image_tensor)[0]
-        return tokens.cpu().numpy()
+            if tokens.dim() == 2:  # (N_patches, D) when B=1
+                tokens = tokens.unsqueeze(0)
+        return tokens.cpu().numpy()  # shape: [B, N_patches, D]
 
     def score_embedding(self, features):
         features = features / np.linalg.norm(features, axis=1, keepdims=True)
@@ -85,7 +86,7 @@ class LocalizeOcclusion:
             return img, anomaly_map
 
 
-class ApplyLoMa:
+class LocalizeAndMaskOcclusion:
     """Localize and mask occlusions using anomaly detection (LoMa).
     
     This transform:
@@ -104,7 +105,8 @@ class ApplyLoMa:
         use_otsu=False,
         masking_threshold=0.5,
         return_anomaly_map=True,
-        return_patch_distances=False
+        return_patch_distances=False,
+        device="cpu",
     ):
         self.feature_extractor = feature_extractor
         self.memory_bank = memory_bank
@@ -114,13 +116,16 @@ class ApplyLoMa:
         self.masking_threshold = masking_threshold
         self.return_anomaly_map = return_anomaly_map
         self.return_patch_distances = return_patch_distances
+        self.device = device
 
-    def extract_features(self, image_tensor, device="cuda"):
+    def extract_features(self, image_tensor):
         """Extract patch-level features from the image using the encoder."""
         with torch.inference_mode():
-            image_batch = image_tensor.to(device)  # shape: [1, 3, H, W]
-            tokens = self.feature_extractor.get_intermediate_layers(image_batch)[0].squeeze()
-        return tokens.cpu().numpy()  # shape: [N_patches, C]
+            image_batch = image_tensor.to(self.device)  # shape: [B, 3, H, W]
+            tokens = self.feature_extractor.get_intermediate_layers(image_batch)[0]
+            if tokens.dim() == 2:  # (N_patches, D) when B=1
+                tokens = tokens.unsqueeze(0)
+        return tokens.cpu().numpy()  # shape: [B, N_patches, D]
 
     def score_embedding(self, features):
         """Compute L2 distance to memory bank for each patch embedding."""
@@ -134,7 +139,7 @@ class ApplyLoMa:
 
     def compute_anomaly_map(self, img):
         B, C, H, W = img.shape
-        features = self.extract_features(img)
+        features = self.extract_features(img)  # [B, N_patches, D]
 
         B_feat, T, D = features.shape
         # Reshape to [B*T, D]
@@ -150,11 +155,7 @@ class ApplyLoMa:
         # Resize each to full image size (e.g., 224x224)
         pixel_maps = [cv2.resize(patch_map.numpy(), (W, H), interpolation=cv2.INTER_LINEAR)
                     for patch_map in patch_distances]  # list of (H, W) arrays
-        pixel_maps = np.stack(pixel_maps)
-        
-        # dumb workaround
-        pixel_maps = pixel_maps[0] if B == 1 else pixel_maps
-        pixel_maps = torch.from_numpy(pixel_maps)
+        pixel_maps = torch.from_numpy(np.stack(pixel_maps))  # (B, H, W)
 
         return pixel_maps, patch_distances
 
@@ -193,9 +194,10 @@ class ApplyLoMa:
         # Stack into [B, 1, H, W]
         mask = torch.stack(binary_masks, dim=0)
 
-
-        # Convert masking color to normalized tensor
-        if isinstance(self.masking_color, tuple) and max(self.masking_color) > 1:
+        # Convert masking color to a normalized float tensor on the right device
+        if isinstance(self.masking_color, torch.Tensor):
+            gray = self.masking_color.to(dtype=img.dtype, device=img.device)
+        elif isinstance(self.masking_color, tuple) and max(self.masking_color) > 1:
             gray = torch.tensor(self.masking_color, dtype=img.dtype, device=img.device) / 255.0
         else:
             gray = torch.tensor(self.masking_color, dtype=img.dtype, device=img.device)

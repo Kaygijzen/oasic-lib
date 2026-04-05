@@ -12,7 +12,7 @@ from .functions import (
 
 from .transforms import (
     LocalizeOcclusion,
-    ApplyLoMa,
+    LocalizeAndMaskOcclusion,
 )
 
 __all__ = [
@@ -21,5 +21,5 @@ __all__ = [
     "batched_anomaly_map_to_occ_map",
     # Transforms
     "LocalizeOcclusion",
-    "ApplyLoMa",
+    "LocalizeAndMaskOcclusion",
 ]
